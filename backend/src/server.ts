@@ -1,6 +1,4 @@
-// backend/src/server.ts
-
-import express, { Application, Request, Response, NextFunction } from 'express';
+import express, { Application, Request, Response } from 'express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import { createConnection } from 'typeorm';
@@ -20,17 +18,13 @@ class Server {
   }
 
   private config(): void {
-    // Middleware
     this.app.use(cors());
     this.app.use(bodyParser.json());
     this.app.use(bodyParser.urlencoded({ extended: true }));
   }
 
   private routes(): void {
-    // Initialize routes
     this.app.use('/api/applications', applicationRoutes);
-    
-    // Default route
     this.app.get('/', (req: Request, res: Response) => {
       res.send('Welcome to your application tracking API.');
     });
@@ -40,14 +34,14 @@ class Server {
     try {
       await createConnection({
         type: 'postgres',
-        host: 'localhost',
+        host: 'postgres', // Ensure this matches your Kubernetes service name or Docker Compose service name
         port: 5432,
-        username: 'your_username',
-        password: 'your_password',
-        database: 'your_database_name',
+        username: 'sean',
+        password: 'thomas09',
+        database: 'job_application_db',
         synchronize: true, // Set to false in production
         logging: true,
-        entities: [__dirname + '/models/*.js'], // Adjust based on your models
+        entities: [__dirname + '/models/*.js'], // Adjust based on your models path
       });
       console.log('Connected to PostgreSQL');
     } catch (error) {

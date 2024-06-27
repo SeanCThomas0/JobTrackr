@@ -1,18 +1,16 @@
 {
   "type": "postgres",
-  "host": "localhost",
+  "host": "postgres", 
   "port": 5432,
   "username": "sean",
   "password": "thomas09",
-  "database": "job_tracker",
+  "database": "job_application_db",
   "synchronize": true,
-  "logging": false,
-  "entities": ["src/entity/**/*.ts"],
-  "migrations": ["src/migration/**/*.ts"],
-  "subscribers": ["src/subscriber/**/*.ts"],
+  "logging": true,
+  "entities": ["src/models/*.js"], 
+  "migrations": ["src/migrations/*.js"], 
   "cli": {
-    "entitiesDir": "src/entity",
-    "migrationsDir": "src/migration",
-    "subscribersDir": "src/subscriber"
+    "entitiesDir": "src/models",
+    "migrationsDir": "src/migrations" 
   }
 }
