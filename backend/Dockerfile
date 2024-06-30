@@ -1,23 +1,18 @@
-# Use the official Node.js image as the base image
-FROM node:16
+# Use a node image to build the backend
+FROM node:14
 
-# Set the working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Copy the package.json and package-lock.json files
+# Copy package.json and install dependencies
 COPY package*.json ./
-
-# Install the dependencies
 RUN npm install
 
 # Copy the rest of the application code
 COPY . .
 
-# Build the TypeScript files
-RUN npm run build
+# Expose port 8000
+EXPOSE 8000
 
-# Expose the port the application will run on
-EXPOSE 5000
-
-# Define the command to run the application
-CMD ["node", "dist/server.js"]
+# Start the backend server
+CMD ["npm", "run", "start"]
