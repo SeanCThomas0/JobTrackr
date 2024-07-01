@@ -1,21 +1,23 @@
-// backend/src/models/Application.ts
-
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, BaseEntity, ManyToOne } from 'typeorm';
+import { User } from './User';
 
 @Entity()
-export class Application {
-  static find() {
-    throw new Error('Method not implemented.');
-  }
+export class Application extends BaseEntity {
   @PrimaryGeneratedColumn()
-  id!: number;
+  id: number;
 
   @Column()
-  companyName!: string;
+  companyName: string;
 
   @Column()
-  position!: string;
+  position: string;
 
   @Column()
-  status!: string;
+  status: string;
+
+  @Column()
+  userId: number;
+
+  @ManyToOne(() => User)
+  user: User;
 }
