@@ -8,7 +8,7 @@ import { User } from './models/User';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'; // Use an environment variable in production
 
 // Extend the Express Request type
@@ -118,7 +118,24 @@ class Server {
   }
 
   private async database(): Promise<void> {
-    // ... (keep your existing database connection code)
+    try {
+      const connectionOptions: PostgresConnectionOptions = {
+        type: 'postgres',
+        host: 'postgres', // Docker service name
+        port: 5432,
+        username: 'sean',
+        password: 'thomas09',
+        database: 'job_application_db',
+        synchronize: true, // Set to false in production
+        logging: true,
+        entities: [__dirname + '/models/*.ts'],
+      };
+
+      await createConnection(connectionOptions);
+      console.log('Connected to PostgreSQL');
+    } catch (error) {
+      console.error('Connection to PostgreSQL failed:', error);
+    }
   }
 
   private start(): void {

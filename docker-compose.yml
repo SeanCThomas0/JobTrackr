@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://backend:8000  # Update to backend service name
     depends_on:
       - backend
 
@@ -17,21 +19,22 @@ services:
     ports:
       - "8000:8000"
     environment:
+      - PORT=8000
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_USER=sean
       - POSTGRES_PASSWORD=thomas09
       - POSTGRES_DB=job_application_db
+      - JWT_SECRET=your_jwt_secret_here
     depends_on:
       - postgres
 
   postgres:
     image: postgres:latest
-    restart: always
     environment:
-      POSTGRES_DB: job_application_db
       POSTGRES_USER: sean
       POSTGRES_PASSWORD: thomas09
+      POSTGRES_DB: job_application_db
     ports:
       - "5432:5432"
     volumes:

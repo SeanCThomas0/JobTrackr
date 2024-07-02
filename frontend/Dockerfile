@@ -1,7 +1,9 @@
-# Use a node image to build the React app
-FROM node:14 AS build
 
-# Set working directory
+
+# Use an official Node.js runtime as a parent image
+FROM node:14-alpine
+
+# Set the working directory in the container
 WORKDIR /app
 
 # Copy package.json and install dependencies
@@ -11,15 +13,11 @@ RUN npm install
 # Copy the rest of the application code
 COPY . .
 
-# Build the React app
+# Build your application
 RUN npm run build
 
-# Use a lightweight server to serve the React app
-FROM nginx:alpine
-COPY --from=build /app/build /usr/share/nginx/html
-
-# Expose port 3000
+# Expose port 3000 to the outside world
 EXPOSE 3000
 
-# Start the Nginx server
-CMD ["nginx", "-g", "daemon off;"]
+# Command to run your application
+CMD ["npm", "start"]

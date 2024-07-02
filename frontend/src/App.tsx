@@ -1,47 +1,28 @@
-// frontend/src/App.tsx
-import React, { useState } from 'react';
-import { BrowserRouter as Router, Route, Switch, Redirect } from 'react-router-dom';
-import { ThemeProvider, createTheme } from '@material-ui/core/styles';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import Login from './components/Login';
-import Register from './components/Register';
-import Dashboard from './components/Dashboard';
-
-const theme = createTheme();
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(!!localStorage.getItem('token'));
+  const [message, setMessage] = useState<string>('');
 
-  const handleLogin = (token: string) => {
-    localStorage.setItem('token', token);
-    setIsAuthenticated(true);
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/health`);
+        setMessage(response.data.message);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setMessage('Error connecting to the server');
+      }
+    };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setIsAuthenticated(false);
-  };
+    fetchData();
+  }, []);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <Switch>
-          <Route path="/login">
-            {isAuthenticated ? <Redirect to="/dashboard" /> : <Login onLogin={handleLogin} />}
-          </Route>
-          <Route path="/register">
-            {isAuthenticated ? <Redirect to="/dashboard" /> : <Register />}
-          </Route>
-          <Route path="/dashboard">
-            {isAuthenticated ? <Dashboard onLogout={handleLogout} /> : <Redirect to="/login" />}
-          </Route>
-          <Route exact path="/">
-            <Redirect to="/dashboard" />
-          </Route>
-        </Switch>
-      </Router>
-    </ThemeProvider>
+    <div>
+      <h1>Job Application Tracker</h1>
+      <p>{message}</p>
+    </div>
   );
 };
 
