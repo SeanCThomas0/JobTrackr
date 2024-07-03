@@ -7,8 +7,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    environment:
-      - REACT_APP_API_URL=http://backend:8000  # Update to backend service name
     depends_on:
       - backend
 
