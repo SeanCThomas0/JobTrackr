@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: server
+  template:
+    metadata:
+      labels:
+        app: server
+    spec:
+      containers:
+      - name: server
+        image: your-docker-registry/job-tracker-server:latest
+        ports:
+        - containerPort: 3000
+        env:
+        - name: DB_USER
+          value: postgres
+        - name: DB_HOST
+          value: db
+        - name: DB_NAME
+          value: job_tracker
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secrets
+              key: db-password
+        - name: DB_PORT
+          value: "5432"

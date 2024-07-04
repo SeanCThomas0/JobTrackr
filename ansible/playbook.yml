@@ -1,0 +1,17 @@
+---
+- name: Deploy Job Tracker
+  hosts: all
+  tasks:
+    - name: Pull Docker images
+      docker_image:
+        name: "{{ item }}"
+        source: pull
+      loop:
+        - your-docker-registry/job-tracker-client:latest
+        - your-docker-registry/job-tracker-server:latest
+        - postgres:13
+
+    - name: Start Docker Compose
+      docker_compose:
+        project_src: C:\path\to\job-tracker
+        state: present
