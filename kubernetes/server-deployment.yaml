@@ -28,6 +28,6 @@ spec:
           valueFrom:
             secretKeyRef:
               name: db-secrets
-              key: db-password
+              key: adminpassword
         - name: DB_PORT
           value: "5432"

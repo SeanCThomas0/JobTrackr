@@ -26,7 +26,7 @@ spec:
           valueFrom:
             secretKeyRef:
               name: db-secrets
-              key: db-password
+              key: adminpassword
         volumeMounts:
         - name: db-init
           mountPath: /docker-entrypoint-initdb.d
