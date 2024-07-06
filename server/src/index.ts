@@ -22,22 +22,29 @@ app.get('/', (req, res) => {
   res.send('Job Application Tracker API');
 });
 
-// User registration
 app.post('/register', async (req, res) => {
-  const { username, password } = req.body;
+  const { username, email, password } = req.body;
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);  // Use bcryptjs.hash
+    // Hash the password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Insert the new user with the hashed password
     const result = await pool.query(
-      'INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id',
-      [username, hashedPassword]
+      'INSERT INTO users (username, email, password_hash) VALUES ($1, $2, $3) RETURNING id',
+      [username, email, hashedPassword]
     );
-    res.status(201).json({ message: 'User created successfully' });
+
+    res.status(201).json({ message: 'User registered successfully' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error('Error during registration:', err);
+    if (err.code === '23505') { // unique_violation error code
+      res.status(400).json({ error: 'Username or email already exists' });
+    } else {
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
 });
-
 // User login
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
@@ -45,17 +52,20 @@ app.post('/login', async (req, res) => {
     const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
     if (result.rows.length > 0) {
       const user = result.rows[0];
-      if (await bcrypt.compare(password, user.password)) {  // Use bcryptjs.compare
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET as string, { expiresIn: '1h' });
-        res.json({ token });
+      // Compare the provided password with the stored hash
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (isMatch) {
+        // Here, you would typically create and send a JWT token
+        // For now, we'll just send a success message
+        res.json({ message: 'Login successful' });
       } else {
-        res.status(401).json({ error: 'Invalid credentials' });
+        res.status(400).json({ error: 'Invalid credentials' });
       }
     } else {
-      res.status(401).json({ error: 'Invalid credentials' });
+      res.status(400).json({ error: 'Invalid credentials' });
     }
   } catch (err) {
-    console.error(err);
+    console.error('Error during login:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

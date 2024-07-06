@@ -5,10 +5,11 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
+import Navigation from './components/Navigation';
 
 const theme = createTheme();
 
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isAuthenticated = !!localStorage.getItem('token');
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
@@ -21,13 +22,16 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={
               <PrivateRoute>
-                <Dashboard />
+                <>
+                  <Navigation />
+                  <Dashboard />
+                </>
               </PrivateRoute>
-            } 
+            }
           />
         </Routes>
       </Router>

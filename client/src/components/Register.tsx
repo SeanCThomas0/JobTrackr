@@ -1,18 +1,19 @@
-import { Button, Container, TextField, Typography } from '@mui/material';
-import axios from 'axios';
 import React, { useState } from 'react';
+import { TextField, Button, Typography, Container, Link } from '@mui/material';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const history = useNavigate();
+  const navigate = useNavigate();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/register', { username, password });
-      history('/login');
+      await axios.post('http://localhost:5000/register', { username, email, password });
+      navigate('/login');
     } catch (error) {
       console.error('Registration failed', error);
     }
@@ -32,6 +33,14 @@ const Register: React.FC = () => {
           onChange={(e) => setUsername(e.target.value)}
         />
         <TextField
+          label="Email"
+          type="email"
+          fullWidth
+          margin="normal"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+        <TextField
           label="Password"
           type="password"
           fullWidth
@@ -43,6 +52,9 @@ const Register: React.FC = () => {
           Register
         </Button>
       </form>
+      <Typography align="center" style={{ marginTop: '1rem' }}>
+        Already have an account? <Link href="/login">Login</Link>
+      </Typography>
     </Container>
   );
 };

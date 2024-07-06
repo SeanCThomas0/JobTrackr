@@ -1,7 +1,8 @@
-import { Button, Container, TextField, Typography } from '@mui/material';
+import { Button, Container, TextField, Typography, Link } from '@mui/material';
 import axios from 'axios';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+
 
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -44,6 +45,9 @@ const Login: React.FC = () => {
           Login
         </Button>
       </form>
+        <Typography align="center" style={{ marginTop: '1rem' }}>
+          Don't have an account? <Link href="/register">Register</Link>
+        </Typography>
     </Container>
   );
 };

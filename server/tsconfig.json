@@ -4,6 +4,7 @@
     "module": "commonjs",
     "outDir": "./dist",
     "rootDir": "./src",
+    "useUnknownInCatchVariables": false,
     "strictPropertyInitialization": false,
     "strict": true,
     "experimentalDecorators": true,
