@@ -52,8 +52,14 @@ app.post('/login', async (req, res) => {
     const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
     if (result.rows.length > 0) {
       const user = result.rows[0];
+      // Make sure we're using the correct column name here
+      const storedHash = user.password_hash; // Changed from user.password to user.password_hash
+      if (!storedHash) {
+        console.error('Stored password hash is undefined for user:', username);
+        return res.status(500).json({ error: 'Internal server error' });
+      }
       // Compare the provided password with the stored hash
-      const isMatch = await bcrypt.compare(password, user.password);
+      const isMatch = await bcrypt.compare(password, storedHash);
       if (isMatch) {
         // Here, you would typically create and send a JWT token
         // For now, we'll just send a success message
