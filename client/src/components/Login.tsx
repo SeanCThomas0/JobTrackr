@@ -3,23 +3,21 @@ import axios from 'axios';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const history = useNavigate();
+  const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const response = await axios.post('http://localhost:5000/login', { username, password });
       localStorage.setItem('token', response.data.token);
-      history('/');
+      navigate('/');
     } catch (error) {
       console.error('Login failed', error);
     }
   };
-  
 
   return (
     <Container maxWidth="xs">
@@ -46,9 +44,9 @@ const Login: React.FC = () => {
           Login
         </Button>
       </form>
-        <Typography align="center" style={{ marginTop: '1rem' }}>
-          Don't have an account? <Link href="/register">Register</Link>
-        </Typography>
+      <Typography align="center" style={{ marginTop: '1rem' }}>
+        Don't have an account? <Link href="/register">Register</Link>
+      </Typography>
     </Container>
   );
 };
