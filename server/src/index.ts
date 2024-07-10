@@ -100,11 +100,11 @@ app.get('/applications', authenticateToken, async (req: any, res) => {
 });
 
 app.post('/applications', authenticateToken, async (req: any, res) => {
-  const { company, position, status } = req.body;
+  const { company, position, status, applied_date, notes } = req.body;
   try {
     const result = await pool.query(
-      'INSERT INTO applications (user_id, company, position, status) VALUES ($1, $2, $3, $4) RETURNING *',
-      [req.user.userId, company, position, status]
+      'INSERT INTO applications (user_id, company, position, status, applied_date, notes) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [req.user.userId, company, position, status, applied_date, notes]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -115,11 +115,11 @@ app.post('/applications', authenticateToken, async (req: any, res) => {
 
 app.put('/applications/:id', authenticateToken, async (req: any, res) => {
   const { id } = req.params;
-  const { company, position, status } = req.body;
+  const { company, position, status, applied_date, notes } = req.body;
   try {
     const result = await pool.query(
-      'UPDATE applications SET company = $1, position = $2, status = $3 WHERE id = $4 AND user_id = $5 RETURNING *',
-      [company, position, status, id, req.user.userId]
+      'UPDATE applications SET company = $1, position = $2, status = $3, applied_date = $4, notes = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 AND user_id = $7 RETURNING *',
+      [company, position, status, applied_date, notes, id, req.user.userId]
     );
     if (result.rows.length > 0) {
       res.json(result.rows[0]);

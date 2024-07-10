@@ -4,23 +4,26 @@ import axios from 'axios';
 
 interface Application {
   id?: number;
-  companyName: string;
+  company: string;
   position: string;
-  applicationDate: string;
   status: string;
+  applied_date: string;
+  notes: string;
 }
 
 interface ApplicationFormProps {
   onClose: () => void;
+  onSubmit: () => void;
   application?: Application | null;
 }
 
-const ApplicationForm: React.FC<ApplicationFormProps> = ({ onClose, application }) => {
+const ApplicationForm: React.FC<ApplicationFormProps> = ({ onClose, onSubmit, application }) => {
   const [formData, setFormData] = useState<Application>({
-    companyName: '',
+    company: '',
     position: '',
-    applicationDate: '',
     status: '',
+    applied_date: new Date().toISOString().split('T')[0],
+    notes: '',
   });
 
   useEffect(() => {
@@ -37,10 +40,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ onClose, application 
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error("No token found");
-      }
-      if (application) {
+      if (application?.id) {
         await axios.put(`${process.env.REACT_APP_API_URL}/applications/${application.id}`, formData, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -49,6 +49,7 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ onClose, application 
           headers: { Authorization: `Bearer ${token}` }
         });
       }
+      onSubmit();
       onClose();
     } catch (error) {
       console.error('Failed to save application', error);
@@ -61,10 +62,10 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ onClose, application 
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <TextField
-            name="companyName"
+            name="company"
             label="Company Name"
             fullWidth
-            value={formData.companyName}
+            value={formData.company}
             onChange={handleChange}
             margin="normal"
           />
@@ -77,11 +78,19 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ onClose, application 
             margin="normal"
           />
           <TextField
-            name="applicationDate"
-            label="Application Date"
+            name="status"
+            label="Status"
+            fullWidth
+            value={formData.status}
+            onChange={handleChange}
+            margin="normal"
+          />
+          <TextField
+            name="applied_date"
+            label="Applied Date"
             type="date"
             fullWidth
-            value={formData.applicationDate}
+            value={formData.applied_date}
             onChange={handleChange}
             margin="normal"
             InputLabelProps={{
@@ -89,10 +98,12 @@ const ApplicationForm: React.FC<ApplicationFormProps> = ({ onClose, application 
             }}
           />
           <TextField
-            name="status"
-            label="Status"
+            name="notes"
+            label="Notes"
             fullWidth
-            value={formData.status}
+            multiline
+            rows={4}
+            value={formData.notes}
             onChange={handleChange}
             margin="normal"
           />
