@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem } from '@mui/material';
 
 interface ApplicationFormProps {
   onClose: () => void;
@@ -18,61 +18,54 @@ interface ApplicationFormProps {
 const ApplicationForm: React.FC<ApplicationFormProps> = ({ onClose, onSubmit, application }) => {
   const [company, setCompany] = useState(application?.company || '');
   const [position, setPosition] = useState(application?.position || '');
-  const [status, setStatus] = useState(application?.status || '');
+  const [status, setStatus] = useState(application?.status || 'Applied');
   const [appliedDate, setAppliedDate] = useState(application?.applied_date || '');
   const [notes, setNotes] = useState(application?.notes || '');
   const [error, setError] = useState<string | null>(null);
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  try {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      throw new Error('No token found');
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!company.trim() || !position.trim() || !status || !appliedDate) {
+      setError('Please fill in all required fields');
+      return;
     }
 
-    const headers = { Authorization: `Bearer ${token}` };
-    const url = application?.id
-      ? `http://localhost:5000/applications/${application.id}`
-      : `http://localhost:5000/applications`;
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No token found');
+      }
 
-    // Format the date to YYYY-MM-DD
-    const formattedDate = new Date(appliedDate).toISOString().split('T')[0];
+      const headers = { Authorization: `Bearer ${token}` };
+      const url = application?.id
+        ? `http://localhost:5000/applications/${application.id}`
+        : `http://localhost:5000/applications`;
 
-    // Ensure formData has all required fields
-    const formData = {
-      company: company.trim(),
-      position: position.trim(),
-      status: status.trim(),
-      applied_date: formattedDate,
-      notes: notes.trim(),
-    };
+      const formData = {
+        company: company.trim(),
+        position: position.trim(),
+        status,
+        applied_date: appliedDate,
+        notes: notes.trim(),
+      };
 
-    // Validate required fields
-    if (!formData.company || !formData.position || !formData.status || !formData.applied_date) {
-      throw new Error('Please fill in all required fields');
+      const method = application?.id ? 'put' : 'post';
+
+      await axios({
+        method,
+        url,
+        headers,
+        data: formData,
+      });
+
+      onSubmit();
+    } catch (error) {
+      console.error('Failed to save application', error);
+      setError('Failed to save application. Please check the form data and try again.');
     }
-
-    // Log formData to verify its structure
-    console.log('Submitting formData:', formData);
-
-    const method = application?.id ? 'put' : 'post';
-
-    await axios({
-      method,
-      url,
-      headers,
-      data: formData,
-    });
-
-    onSubmit();
-    onClose();
-  } catch (error) {
-    console.error('Failed to save application', error);
-    let errorMesasage = 'Failed to save application. Please check the form data and try again.';
-    setError(errorMesasage || 'Failed to save application. Please check the form data and try again.');
-  }
-};
+  };
 
   return (
     <Dialog open onClose={onClose}>
@@ -99,14 +92,18 @@ const handleSubmit = async (e: React.FormEvent) => {
             required
           />
           <TextField
+            select
             margin="dense"
             label="Status"
-            type="text"
             fullWidth
             value={status}
             onChange={(e) => setStatus(e.target.value)}
             required
-          />
+          >
+            <MenuItem value="Applied">Applied</MenuItem>
+            <MenuItem value="Rejected">Rejected</MenuItem>
+            <MenuItem value="Accepted">Accepted</MenuItem>
+          </TextField>
           <TextField
             margin="dense"
             label="Applied Date"

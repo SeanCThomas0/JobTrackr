@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Container, Grid, Button, Typography, CircularProgress } from '@mui/material';
+import { Container, Button, Typography, CircularProgress, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 import ApplicationForm from './ApplicationForm';
 
 interface Application {
@@ -12,12 +12,20 @@ interface Application {
   notes: string;
 }
 
+interface ApplicationStats {
+  total: number;
+  applied: number;
+  rejected: number;
+  accepted: number;
+}
+
 const Dashboard: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [currentApplication, setCurrentApplication] = useState<Application | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [stats, setStats] = useState<ApplicationStats>({ total: 0, applied: 0, rejected: 0, accepted: 0 });
 
   const fetchApplications = async () => {
     setIsLoading(true);
@@ -29,6 +37,7 @@ const Dashboard: React.FC = () => {
       });
       if (Array.isArray(response.data)) {
         setApplications(response.data);
+        calculateStats(response.data);
       } else {
         console.error('Unexpected response data:', response.data);
         setError('Failed to fetch applications. Unexpected response format.');
@@ -39,6 +48,15 @@ const Dashboard: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const calculateStats = (apps: Application[]) => {
+    const newStats = apps.reduce((acc, app) => {
+      acc.total++;
+      acc[app.status.toLowerCase() as keyof ApplicationStats]++;
+      return acc;
+    }, { total: 0, applied: 0, rejected: 0, accepted: 0 } as ApplicationStats);
+    setStats(newStats);
   };
 
   useEffect(() => {
@@ -61,29 +79,20 @@ const Dashboard: React.FC = () => {
   };
 
   const handleFormSubmit = async () => {
+    await fetchApplications();
+    handleCloseForm();
+  };
+
+  const handleDeleteApplication = async (id: number) => {
     try {
       const token = localStorage.getItem('token');
-      if (currentApplication?.id) {
-        // Update existing application
-        await axios.put(
-          `http://localhost:5000/applications/${currentApplication.id}`,
-          currentApplication,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      } else {
-        // Add new application
-        await axios.post(
-          `http://localhost:5000/applications`,
-          currentApplication,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-      }
-      // Refresh applications after submit
-      fetchApplications();
-      handleCloseForm();
+      await axios.delete(`http://localhost:5000/applications/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      await fetchApplications();
     } catch (error) {
-      console.error('Failed to save application', error);
-      setError('Failed to save application. Please try again.');
+      console.error('Failed to delete application', error);
+      setError('Failed to delete application. Please try again.');
     }
   };
 
@@ -100,26 +109,43 @@ const Dashboard: React.FC = () => {
       <Typography variant="h4" gutterBottom>
         Job Applications
       </Typography>
-      <Button variant="contained" color="primary" onClick={handleAddApplication}>
+      <Button variant="contained" color="primary" onClick={handleAddApplication} style={{ marginBottom: '20px' }}>
         Add Application
       </Button>
       {error && <Typography color="error">{error}</Typography>}
+      <Typography variant="h6" gutterBottom>
+        Stats: Total: {stats.total}, Applied: {stats.applied}, Rejected: {stats.rejected}, Accepted: {stats.accepted}
+      </Typography>
       {applications.length === 0 ? (
         <Typography>No applications found. Add your first application!</Typography>
       ) : (
-        <Grid container spacing={3}>
-          {applications.map((application) => (
-            <Grid item xs={12} sm={6} md={4} key={application.id}>
-              <div>
-                <Typography variant="h6">{application.company}</Typography>
-                <Typography>{application.position}</Typography>
-                <Typography>{application.status}</Typography>
-                <Typography>{new Date(application.applied_date).toLocaleDateString()}</Typography>
-                <Button onClick={() => handleEditApplication(application)}>Edit</Button>
-              </div>
-            </Grid>
-          ))}
-        </Grid>
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Company</TableCell>
+                <TableCell>Position</TableCell>
+                <TableCell>Status</TableCell>
+                <TableCell>Applied Date</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {applications.map((application) => (
+                <TableRow key={application.id}>
+                  <TableCell>{application.company}</TableCell>
+                  <TableCell>{application.position}</TableCell>
+                  <TableCell>{application.status}</TableCell>
+                  <TableCell>{new Date(application.applied_date).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Button onClick={() => handleEditApplication(application)}>Edit</Button>
+                    <Button onClick={() => handleDeleteApplication(application.id)} color="secondary">Delete</Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       )}
       {isFormOpen && (
         <ApplicationForm

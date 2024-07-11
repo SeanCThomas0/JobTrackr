@@ -111,6 +111,12 @@ app.get('/applications', authenticateToken, async (req: Request, res: Response) 
 
 app.post('/applications', authenticateToken, async (req: Request, res: Response) => {
   const { company, position, status, applied_date, notes } = req.body;
+  
+  // Validate required fields
+  if (!company || !position || !status || !applied_date) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
   try {
     const user = getUserFromRequest(req);
     const result = await pool.query(
@@ -135,6 +141,25 @@ app.put('/applications/:id', authenticateToken, async (req: Request, res: Respon
     );
     if (result.rows.length > 0) {
       res.json(result.rows[0]);
+    } else {
+      res.status(404).json({ error: 'Application not found' });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+app.delete('/applications/:id', authenticateToken, async (req: Request, res: Response) => {
+  const { id } = req.params;
+  try {
+    const user = getUserFromRequest(req);
+    const result = await pool.query(
+      'DELETE FROM applications WHERE id = $1 AND user_id = $2 RETURNING *',
+      [id, user.userId]
+    );
+    if (result.rows.length > 0) {
+      res.json({ message: 'Application deleted successfully' });
     } else {
       res.status(404).json({ error: 'Application not found' });
     }
