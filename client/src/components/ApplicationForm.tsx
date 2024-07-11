@@ -1,114 +1,137 @@
-import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button } from '@mui/material';
+import React, { useState } from 'react';
 import axios from 'axios';
-
-interface Application {
-  id?: number;
-  company: string;
-  position: string;
-  status: string;
-  applied_date: string;
-  notes: string;
-}
+import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 
 interface ApplicationFormProps {
   onClose: () => void;
   onSubmit: () => void;
-  application?: Application | null;
+  application: {
+    id: number;
+    company: string;
+    position: string;
+    status: string;
+    applied_date: string;
+    notes: string;
+  } | null;
 }
 
 const ApplicationForm: React.FC<ApplicationFormProps> = ({ onClose, onSubmit, application }) => {
-  const [formData, setFormData] = useState<Application>({
-    company: '',
-    position: '',
-    status: '',
-    applied_date: new Date().toISOString().split('T')[0],
-    notes: '',
-  });
+  const [company, setCompany] = useState(application?.company || '');
+  const [position, setPosition] = useState(application?.position || '');
+  const [status, setStatus] = useState(application?.status || '');
+  const [appliedDate, setAppliedDate] = useState(application?.applied_date || '');
+  const [notes, setNotes] = useState(application?.notes || '');
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (application) {
-      setFormData(application);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No token found');
     }
-  }, [application]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    const headers = { Authorization: `Bearer ${token}` };
+    const url = application?.id
+      ? `http://localhost:5000/applications/${application.id}`
+      : `http://localhost:5000/applications`;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem('token');
-      if (application?.id) {
-        await axios.put(`${process.env.REACT_APP_API_URL}/applications/${application.id}`, formData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      } else {
-        await axios.post(`${process.env.REACT_APP_API_URL}/applications`, formData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      }
-      onSubmit();
-      onClose();
-    } catch (error) {
-      console.error('Failed to save application', error);
+    // Format the date to YYYY-MM-DD
+    const formattedDate = new Date(appliedDate).toISOString().split('T')[0];
+
+    // Ensure formData has all required fields
+    const formData = {
+      company: company.trim(),
+      position: position.trim(),
+      status: status.trim(),
+      applied_date: formattedDate,
+      notes: notes.trim(),
+    };
+
+    // Validate required fields
+    if (!formData.company || !formData.position || !formData.status || !formData.applied_date) {
+      throw new Error('Please fill in all required fields');
     }
-  };
+
+    // Log formData to verify its structure
+    console.log('Submitting formData:', formData);
+
+    const method = application?.id ? 'put' : 'post';
+
+    await axios({
+      method,
+      url,
+      headers,
+      data: formData,
+    });
+
+    onSubmit();
+    onClose();
+  } catch (error) {
+    console.error('Failed to save application', error);
+    let errorMesasage = 'Failed to save application. Please check the form data and try again.';
+    setError(errorMesasage || 'Failed to save application. Please check the form data and try again.');
+  }
+};
 
   return (
-    <Dialog open={true} onClose={onClose}>
-      <DialogTitle>{application ? 'Edit Application' : 'Add Application'}</DialogTitle>
+    <Dialog open onClose={onClose}>
+      <DialogTitle>{application ? 'Edit Application' : 'New Application'}</DialogTitle>
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <TextField
-            name="company"
-            label="Company Name"
+            autoFocus
+            margin="dense"
+            label="Company"
+            type="text"
             fullWidth
-            value={formData.company}
-            onChange={handleChange}
-            margin="normal"
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+            required
           />
           <TextField
-            name="position"
+            margin="dense"
             label="Position"
+            type="text"
             fullWidth
-            value={formData.position}
-            onChange={handleChange}
-            margin="normal"
+            value={position}
+            onChange={(e) => setPosition(e.target.value)}
+            required
           />
           <TextField
-            name="status"
+            margin="dense"
             label="Status"
+            type="text"
             fullWidth
-            value={formData.status}
-            onChange={handleChange}
-            margin="normal"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            required
           />
           <TextField
-            name="applied_date"
+            margin="dense"
             label="Applied Date"
             type="date"
             fullWidth
-            value={formData.applied_date}
-            onChange={handleChange}
-            margin="normal"
+            value={appliedDate}
+            onChange={(e) => setAppliedDate(e.target.value)}
             InputLabelProps={{
               shrink: true,
             }}
+            required
           />
           <TextField
-            name="notes"
+            margin="dense"
             label="Notes"
+            type="text"
             fullWidth
             multiline
             rows={4}
-            value={formData.notes}
-            onChange={handleChange}
-            margin="normal"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
           />
+          {error && <p style={{ color: 'red' }}>{error}</p>}
           <DialogActions>
-            <Button onClick={onClose} color="secondary">
+            <Button onClick={onClose} color="primary">
               Cancel
             </Button>
             <Button type="submit" color="primary">

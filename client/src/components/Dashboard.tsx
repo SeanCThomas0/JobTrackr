@@ -24,7 +24,7 @@ const Dashboard: React.FC = () => {
     setError(null);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/applications`, {
+      const response = await axios.get(`http://localhost:5000/applications`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (Array.isArray(response.data)) {
@@ -36,7 +36,6 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('Failed to fetch applications', error);
       setError('Failed to fetch applications. Please try again.');
-      setApplications([]); // Set to empty array in case of error
     } finally {
       setIsLoading(false);
     }
@@ -61,9 +60,31 @@ const Dashboard: React.FC = () => {
     setCurrentApplication(null);
   };
 
-  const handleFormSubmit = () => {
-    fetchApplications();
-    handleCloseForm();
+  const handleFormSubmit = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (currentApplication?.id) {
+        // Update existing application
+        await axios.put(
+          `http://localhost:5000/applications/${currentApplication.id}`,
+          currentApplication,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        // Add new application
+        await axios.post(
+          `http://localhost:5000/applications`,
+          currentApplication,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+      // Refresh applications after submit
+      fetchApplications();
+      handleCloseForm();
+    } catch (error) {
+      console.error('Failed to save application', error);
+      setError('Failed to save application. Please try again.');
+    }
   };
 
   if (isLoading) {

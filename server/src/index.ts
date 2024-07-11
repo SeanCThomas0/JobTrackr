@@ -1,8 +1,11 @@
 import bcrypt from 'bcryptjs';
 import cors from 'cors';
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { Pool } from 'pg';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -77,21 +80,28 @@ app.post('/login', async (req, res) => {
   }
 });
 
-const authenticateToken = (req: any, res: any, next: any) => {
+// Middleware to authenticate token and attach user info to request
+const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
   if (token == null) return res.sendStatus(401);
 
   jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
     if (err) return res.sendStatus(403);
-    req.user = user;
+    // Attach user info to request object using a symbol
+    (req as any)._user = user;
     next();
   });
 };
 
-app.get('/applications', authenticateToken, async (req: any, res) => {
+const getUserFromRequest = (req: Request) => {
+  return (req as any)._user;
+};
+
+app.get('/applications', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const result = await pool.query('SELECT * FROM applications WHERE user_id = $1', [req.user.userId]);
+    const user = getUserFromRequest(req);
+    const result = await pool.query('SELECT * FROM applications WHERE user_id = $1', [user.userId]);
     res.json(result.rows);
   } catch (err) {
     console.error(err);
@@ -99,12 +109,13 @@ app.get('/applications', authenticateToken, async (req: any, res) => {
   }
 });
 
-app.post('/applications', authenticateToken, async (req: any, res) => {
+app.post('/applications', authenticateToken, async (req: Request, res: Response) => {
   const { company, position, status, applied_date, notes } = req.body;
   try {
+    const user = getUserFromRequest(req);
     const result = await pool.query(
       'INSERT INTO applications (user_id, company, position, status, applied_date, notes) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-      [req.user.userId, company, position, status, applied_date, notes]
+      [user.userId, company, position, status, applied_date, notes]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -113,13 +124,14 @@ app.post('/applications', authenticateToken, async (req: any, res) => {
   }
 });
 
-app.put('/applications/:id', authenticateToken, async (req: any, res) => {
+app.put('/applications/:id', authenticateToken, async (req: Request, res: Response) => {
   const { id } = req.params;
   const { company, position, status, applied_date, notes } = req.body;
   try {
+    const user = getUserFromRequest(req);
     const result = await pool.query(
       'UPDATE applications SET company = $1, position = $2, status = $3, applied_date = $4, notes = $5, updated_at = CURRENT_TIMESTAMP WHERE id = $6 AND user_id = $7 RETURNING *',
-      [company, position, status, applied_date, notes, id, req.user.userId]
+      [company, position, status, applied_date, notes, id, user.userId]
     );
     if (result.rows.length > 0) {
       res.json(result.rows[0]);
