@@ -6,6 +6,8 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Dashboard from './components/Dashboard';
 import Navigation from './components/Navigation';
+import PublicApplications from './components/PublicApplications';
+import Settings from './components/Settings';
 
 const theme = createTheme();
 
@@ -13,6 +15,7 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   const isAuthenticated = !!localStorage.getItem('token');
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
+
 
 const App: React.FC = () => {
   return (

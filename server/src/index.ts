@@ -169,6 +169,7 @@ app.delete('/applications/:id', authenticateToken, async (req: Request, res: Res
   }
 });
 
+
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
